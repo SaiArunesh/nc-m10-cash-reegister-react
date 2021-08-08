@@ -1,2 +1,2 @@
-# nc-m10-cash-reegister-react
+# nc-m10-cash-register-react
 Created with CodeSandbox
