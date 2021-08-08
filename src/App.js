@@ -7,6 +7,7 @@ export default function App() {
   const [billAmount, setBillAmount] = useState("");
   const [enableCashGiven, setEnableCashGiven] = useState(false);
   const [showSubmit, setShowSubmit] = useState(false);
+  const [enableTable, setEnableTable] = useState(false);
   const [returnAmount, setReturnAmount] = useState({
     "2000": 0,
     "500": 0,
@@ -21,6 +22,7 @@ export default function App() {
 
   function checkAmount(event, setAmount, setError) {
     resetChangeTable();
+    setEnableTable(false);
     setAmount(event.target.value);
     if (event.target.value === "0") {
       setError("Cash cannot be zero");
@@ -71,8 +73,11 @@ export default function App() {
         setFieldError("No change to be returned");
         return;
       }
+
       let notes = [];
       let retAmnt = {};
+
+      setEnableTable(true);
       [notes, retAmnt] = resetChangeTable();
 
       for (let i = notes.length - 1; i >= 0; i--) {
@@ -96,8 +101,7 @@ export default function App() {
       </h1>
       <hr />
       <h2 className="title-desc">
-        Enter the bill amount and cash given to know the desi change to be
-        returned
+        Enter the bill amount and cash given to find change to be returned
       </h2>
       <label>
         Enter Bill Amount
@@ -125,13 +129,15 @@ export default function App() {
         <button onClick={calculateChange}>Calculate</button>
       )}
 
-      {fieldError === "" && showSubmit && (
+      {enableTable && fieldError === "" && showSubmit && (
         <table>
           <tbody>
             <tr>
               <th>No.of Notes</th>
               {Object.keys(returnAmount).map((val) => (
-                <td key={val}>{returnAmount[val]}</td>
+                <td className="returnNotes" key={val}>
+                  {returnAmount[val]}
+                </td>
               ))}
             </tr>
             <tr>
