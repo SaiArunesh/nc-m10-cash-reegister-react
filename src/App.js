@@ -2,9 +2,7 @@ import "./styles.css";
 import { useState } from "react";
 
 export default function App() {
-  const [cashGivenError, setCashGivenError] = useState("");
-  const [billAmountError, setBillAmountError] = useState("");
-  const [balanceError, setBalanceError] = useState("");
+  const [fieldError, setFieldError] = useState("");
   const [cashGiven, setCashGiven] = useState("");
   const [billAmount, setBillAmount] = useState("");
   const [enableCashGiven, setEnableCashGiven] = useState(false);
@@ -22,15 +20,14 @@ export default function App() {
   });
 
   function checkAmount(event, setAmount, setError) {
+    resetChangeTable();
     setAmount(event.target.value);
     if (event.target.value === "0") {
       setError("Cash cannot be zero");
-      setBalanceError("");
       return false;
     } else if (event.target.value < 0) {
       setAmount(0);
       setError("Cash cannot be zero");
-      setBalanceError("");
       return false;
     } else {
       setError("");
@@ -38,8 +35,19 @@ export default function App() {
     }
   }
 
+  function resetChangeTable() {
+    let notes = Object.keys(returnAmount);
+    let retAmnt = Object.assign({}, returnAmount);
+
+    for (let i = 0; i < notes.length; i++) {
+      retAmnt[notes[i]] = 0;
+    }
+    setReturnAmount(retAmnt);
+    return [notes, retAmnt];
+  }
+
   function onBillInputChange(event) {
-    let status = checkAmount(event, setBillAmount, setBillAmountError);
+    let status = checkAmount(event, setBillAmount, setFieldError);
     setEnableCashGiven(status);
     if (!status) {
       setCashGiven("");
@@ -47,7 +55,7 @@ export default function App() {
   }
 
   function onCashInputChange(event) {
-    let status = checkAmount(event, setCashGiven, setCashGivenError);
+    let status = checkAmount(event, setCashGiven, setFieldError);
     setShowSubmit(status);
   }
 
@@ -55,28 +63,24 @@ export default function App() {
     const cash = parseInt(cashGiven, 10);
     const bill = parseInt(billAmount, 10);
     if (cash < bill) {
-      setBalanceError("Cash given is less than Bill Amount");
+      setFieldError("Cash given is less than Bill Amount");
       return;
     } else {
       let balance = cash - bill;
       if (balance < 1) {
-        setBalanceError("No change to be returned");
+        setFieldError("No change to be returned");
         return;
       }
-
-      let notes = Object.keys(returnAmount);
-      let retAmnt = Object.assign({}, returnAmount);
-
-      for (let i = 0; i < notes.length; i++) {
-        retAmnt[notes[i]] = 0;
-      }
+      let notes = [];
+      let retAmnt = {};
+      [notes, retAmnt] = resetChangeTable();
 
       for (let i = notes.length - 1; i >= 0; i--) {
         retAmnt[notes[i]] = Math.floor(balance / notes[i]);
         balance = balance - notes[i] * retAmnt[notes[i]];
       }
       setReturnAmount(retAmnt);
-      setBalanceError("");
+      setFieldError("");
     }
   }
 
@@ -104,7 +108,7 @@ export default function App() {
           type="number"
         />
       </label>
-      {billAmountError !== "" && <p className="error">{billAmountError}</p>}
+
       {enableCashGiven && (
         <label>
           Enter Cash Given
@@ -116,37 +120,30 @@ export default function App() {
           />
         </label>
       )}
-      {enableCashGiven && cashGivenError !== "" && (
-        <p className="error">{cashGivenError}</p>
-      )}
+
       {cashGiven !== "" && showSubmit && (
         <button onClick={calculateChange}>Calculate</button>
       )}
-      {billAmountError === "" &&
-        cashGivenError === "" &&
-        showSubmit &&
-        balanceError !== "" && <p className="error">{balanceError}</p>}
-      {cashGivenError === "" &&
-        billAmountError === "" &&
-        showSubmit &&
-        balanceError === "" && (
-          <table>
-            <tbody>
-              <tr>
-                <th>No.of Notes</th>
-                {Object.keys(returnAmount).map((val) => (
-                  <td key={val}>{returnAmount[val]}</td>
-                ))}
-              </tr>
-              <tr>
-                <th>Note</th>
-                {Object.keys(returnAmount).map((val) => (
-                  <td key={val}>{val}</td>
-                ))}
-              </tr>
-            </tbody>
-          </table>
-        )}
+
+      {fieldError === "" && showSubmit && (
+        <table>
+          <tbody>
+            <tr>
+              <th>No.of Notes</th>
+              {Object.keys(returnAmount).map((val) => (
+                <td key={val}>{returnAmount[val]}</td>
+              ))}
+            </tr>
+            <tr>
+              <th>Note</th>
+              {Object.keys(returnAmount).map((val) => (
+                <td key={val}>{val}</td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+      )}
+      {fieldError !== "" && <p className="error">{fieldError}</p>}
     </div>
   );
 }
