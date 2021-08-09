@@ -87,3 +87,7 @@ th {
 .returnNotes {
   font-weight: bold;
 }
+a {
+  position: absolute;
+  bottom: 0;
+}
