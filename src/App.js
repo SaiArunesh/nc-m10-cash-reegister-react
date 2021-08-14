@@ -11,9 +11,7 @@ export default function App() {
   const [returnAmount, setReturnAmount] = useState({
     "2000": 0,
     "500": 0,
-    "200": 0,
     "100": 0,
-    "50": 0,
     "20": 0,
     "10": 0,
     "5": 0,
