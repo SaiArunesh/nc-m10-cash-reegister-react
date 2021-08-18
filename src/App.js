@@ -29,6 +29,9 @@ export default function App() {
       setAmount(0);
       setError("Cash cannot be zero");
       return false;
+    } else if (event.target.value === "") {
+      setError("");
+      return false;
     } else {
       setError("");
       return true;
