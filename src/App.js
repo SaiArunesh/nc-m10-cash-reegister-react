@@ -2,13 +2,7 @@ import "./styles.css";
 import { useState } from "react";
 
 export default function App() {
-  const [fieldError, setFieldError] = useState("");
-  const [cashGiven, setCashGiven] = useState("");
-  const [billAmount, setBillAmount] = useState("");
-  const [enableCashGiven, setEnableCashGiven] = useState(false);
-  const [showSubmit, setShowSubmit] = useState(false);
-  const [enableTable, setEnableTable] = useState(false);
-  const [returnAmount, setReturnAmount] = useState({
+  const [retAmount, setRetAmount] = useState({
     "2000": 0,
     "500": 0,
     "100": 0,
@@ -18,76 +12,102 @@ export default function App() {
     "1": 0
   });
 
-  function checkAmount(event, setAmount, setError) {
-    resetChangeTable();
-    setEnableTable(false);
-    setAmount(event.target.value);
-    if (event.target.value === "0") {
-      setError("Cash cannot be zero");
-      return false;
-    } else if (event.target.value < 0) {
-      setAmount(0);
-      setError("Cash cannot be zero");
-      return false;
-    } else if (event.target.value === "") {
-      setError("");
-      return false;
-    } else {
-      setError("");
-      return true;
+  const [billAmount, setBillAmount] = useState("");
+  const [cashGiven, setCashGiven] = useState("");
+  const [fieldError, setFieldError] = useState("");
+  const [showTable, setShowTable] = useState(false);
+  const [enableCashGiven, setEnableCashGiven] = useState(false);
+  const [enableButton, setEnableButton] = useState(false);
+
+  function billAmountChangeHandler(event) {
+    setShowTable(false);
+
+    setRetAmount({
+      "2000": 0,
+      "500": 0,
+      "100": 0,
+      "20": 0,
+      "10": 0,
+      "5": 0,
+      "1": 0
+    });
+
+    if (event.target.value === "") {
+      setEnableCashGiven(false);
+      setEnableButton(false);
+      setFieldError("");
+      return;
     }
+
+    let bill = Number(event.target.value);
+
+    if (bill < 0) {
+      setEnableCashGiven(false);
+      setEnableButton(false);
+      setFieldError("Invalid Bill Amount");
+      return;
+    }
+    setEnableCashGiven(true);
+
+    setFieldError("");
+    setBillAmount(event.target.value);
   }
 
-  function resetChangeTable() {
-    let notes = Object.keys(returnAmount);
-    let retAmnt = Object.assign({}, returnAmount);
+  function cashGivenChangeHandler(event) {
+    setShowTable(false);
+    setEnableButton(false);
+    let cash = Number(event.target.value);
 
-    for (let i = 0; i < notes.length; i++) {
-      retAmnt[notes[i]] = 0;
+    if (event.target.value === "") {
+      setFieldError("");
+      return;
     }
-    setReturnAmount(retAmnt);
-    return [notes, retAmnt];
-  }
 
-  function onBillInputChange(event) {
-    let status = checkAmount(event, setBillAmount, setFieldError);
-    setEnableCashGiven(status);
-    if (!status) {
-      setCashGiven("");
+    if (cash < 0) {
+      setFieldError("Invalid Cash Amount");
+      return;
     }
-  }
-
-  function onCashInputChange(event) {
-    let status = checkAmount(event, setCashGiven, setFieldError);
-    setShowSubmit(status);
+    setRetAmount({
+      "2000": 0,
+      "500": 0,
+      "100": 0,
+      "20": 0,
+      "10": 0,
+      "5": 0,
+      "1": 0
+    });
+    setEnableButton(true);
+    setFieldError("");
+    setCashGiven(event.target.value);
   }
 
   function calculateChange() {
-    const cash = parseInt(cashGiven, 10);
-    const bill = parseInt(billAmount, 10);
-    if (cash < bill) {
-      setFieldError("Cash given is less than Bill Amount");
+    let bill = Number(billAmount);
+    let cash = Number(cashGiven);
+
+    let balance = cash - bill;
+
+    if (balance === 0) {
+      setFieldError("No change to be returned");
       return;
-    } else {
-      let balance = cash - bill;
-      if (balance < 1) {
-        setFieldError("No change to be returned");
-        return;
-      }
-
-      let notes = [];
-      let retAmnt = {};
-
-      setEnableTable(true);
-      [notes, retAmnt] = resetChangeTable();
-
-      for (let i = notes.length - 1; i >= 0; i--) {
-        retAmnt[notes[i]] = Math.floor(balance / notes[i]);
-        balance = balance - notes[i] * retAmnt[notes[i]];
-      }
-      setReturnAmount(retAmnt);
-      setFieldError("");
     }
+
+    if (balance < 0) {
+      setFieldError("Cash Given is less than bill amount");
+      return;
+    }
+
+    let denominations = Object.keys(retAmount);
+    let returnAmount = Object.assign({}, retAmount);
+
+    for (let i = denominations.length - 1; i >= 0; i--) {
+      returnAmount[denominations[i]] = Math.floor(balance / denominations[i]);
+      balance = balance - denominations[i] * returnAmount[denominations[i]];
+    }
+
+    setRetAmount(returnAmount);
+
+    setShowTable(true);
   }
 
   return (
@@ -104,52 +124,38 @@ export default function App() {
       <h2 className="title-desc">
         Enter the bill amount and cash given to find change to be returned
       </h2>
+
       <label>
         Enter Bill Amount
-        <input
-          placeholder="Bill Amount"
-          value={billAmount}
-          onChange={onBillInputChange}
-          type="number"
-        />
+        <input type="number" onChange={billAmountChangeHandler}></input>
       </label>
 
       {enableCashGiven && (
         <label>
           Enter Cash Given
-          <input
-            placeholder="Cash given by Customer"
-            value={cashGiven}
-            onChange={onCashInputChange}
-            type="number"
-          />
+          <input type="number" onChange={cashGivenChangeHandler}></input>
         </label>
       )}
 
-      {cashGiven !== "" && showSubmit && (
-        <button onClick={calculateChange}>Calculate</button>
-      )}
+      {enableButton && <button onClick={calculateChange}>CALCULATE</button>}
 
-      {enableTable && fieldError === "" && showSubmit && (
+      {showTable && (
         <table>
-          <tbody>
-            <tr>
-              <th>No.of Notes</th>
-              {Object.keys(returnAmount).map((val) => (
-                <td className="returnNotes" key={val}>
-                  {returnAmount[val]}
-                </td>
-              ))}
-            </tr>
-            <tr>
-              <th>Note</th>
-              {Object.keys(returnAmount).map((val) => (
-                <td key={val}>{val}</td>
-              ))}
-            </tr>
-          </tbody>
+          <tr>
+            <th>No of Notes</th>
+            {Object.keys(retAmount).map((count) => (
+              <td>{count}</td>
+            ))}
+          </tr>
+          <tr>
+            <th>Note</th>
+            {Object.keys(retAmount).map((value) => (
+              <td>{retAmount[value]}</td>
+            ))}
+          </tr>
         </table>
       )}
+
       {fieldError !== "" && <p className="error">{fieldError}</p>}
     </div>
   );
